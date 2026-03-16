@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vallabhani Akhil — Space Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/MotionPathPlugin.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--cyan:#00f5ff;--purple:#c800ff;--green:#00ff88;--orange:#ff6a00;--pink:#ff0080;}
+html,body{width:100%;height:100%;overflow:hidden;background:#04040c;font-family:'Rajdhani',sans-serif;cursor:none;}
+
+/* CUSTOM CURSOR */
+#cursor{position:fixed;width:24px;height:24px;border:2px solid #00f5ff;border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:border-color .3s,width .15s,height .15s;box-shadow:0 0 8px #00f5ff55;}
+#cursor-dot{position:fixed;width:5px;height:5px;background:#00f5ff;border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:background .3s;box-shadow:0 0 6px #00f5ff;}
+#cursor.click{width:34px;height:34px;opacity:.7;}
+
+/* LOADING SCREEN */
+#loader{position:fixed;inset:0;background:#04040c;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;}
+#loader-bar-wrap{width:280px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;margin-top:14px;}
+#loader-bar{height:100%;width:0%;background:var(--cyan);border-radius:2px;box-shadow:0 0 10px var(--cyan);transition:width .3s ease;}
+#loader-ship{position:relative;width:80px;height:120px;}
+#loader-title{font-family:'Orbitron',monospace;font-size:13px;letter-spacing:6px;color:rgba(255,255,255,.4);}
+#loader-bar-wrap{width:260px;height:2px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
+#loader-bar{height:100%;width:0%;background:var(--cyan);border-radius:2px;box-shadow:0 0 8px var(--cyan);}
+#loader-status{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:rgba(0,245,255,.5);}
+
+/* WARP OVERLAY */
+
+/* DEBRIS CANVAS */
+#debris-canvas{position:fixed;inset:0;z-index:2;pointer-events:none;}
+
+/* NEBULA PULSE */
+#nebula-canvas{position:fixed;inset:0;z-index:1;pointer-events:none;}
+
+/* RESUME BTN */
+.resume-btn{display:inline-flex;align-items:center;gap:8px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;padding:10px 22px;border:1.5px solid;border-radius:25px;background:transparent;cursor:none;text-decoration:none;transition:background .2s;margin-top:16px;opacity:0;transform:translateY(10px);}
+.resume-btn:hover{background:rgba(255,255,255,.06);}
+.resume-btn svg{width:14px;height:14px;}
+#bg-canvas{position:fixed;inset:0;z-index:0;}
+#trail-canvas{position:fixed;inset:0;z-index:8;pointer-events:none;}
+
+/* HUD */
+#hud-tl{position:fixed;top:18px;left:22px;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;color:var(--cyan);z-index:100;opacity:.8;}
+#hud-tr{position:fixed;top:18px;right:22px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:#00ff88;z-index:100;}
+.corner{position:fixed;width:20px;height:20px;z-index:100;}
+.c-tl{top:8px;left:8px;border-top:2px solid rgba(0,245,255,.5);border-left:2px solid rgba(0,245,255,.5);}
+.c-tr{top:8px;right:8px;border-top:2px solid rgba(0,245,255,.5);border-right:2px solid rgba(0,245,255,.5);}
+.c-bl{bottom:8px;left:8px;border-bottom:2px solid rgba(0,245,255,.5);border-left:2px solid rgba(0,245,255,.5);}
+.c-br{bottom:8px;right:8px;border-bottom:2px solid rgba(0,245,255,.5);border-right:2px solid rgba(0,245,255,.5);}
+#hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.2);z-index:100;white-space:nowrap;}
+
+/* BREADCRUMBS */
+#breadcrumbs{position:fixed;left:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px;z-index:100;}
+.bcrumb{width:38px;height:38px;border-radius:50%;border:2px solid;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:8px;font-weight:700;opacity:0;transform:scale(0);transition:all .3s;position:relative;background:rgba(4,4,12,.8);}
+.bcrumb.visible{opacity:1;transform:scale(1);}
+.bcrumb:hover{transform:scale(1.2)!important;}
+.bcrumb-tip{position:absolute;left:48px;top:50%;transform:translateY(-50%);font-family:'Share Tech Mono',monospace;font-size:9px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;padding:3px 10px;background:rgba(4,4,12,.95);border-radius:4px;border:1px solid rgba(255,255,255,.1);}
+.bcrumb:hover .bcrumb-tip{opacity:1;}
+
+/* NAV DOTS */
+#nav-dots{position:fixed;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:14px;z-index:100;}
+.ndot{width:10px;height:10px;border-radius:50%;border:2px solid rgba(255,255,255,.2);opacity:.3;cursor:pointer;transition:all .3s;position:relative;}
+.ndot.unlocked{opacity:.7;}
+.ndot.active{opacity:1;transform:scale(1.5);}
+.ndot-tip{position:absolute;right:22px;top:50%;transform:translateY(-50%);font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;padding:3px 8px;background:rgba(4,4,12,.95);border-radius:3px;}
+.ndot:hover .ndot-tip{opacity:1;}
+
+/* SCENE */
+#scene{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;}
+
+/* PLANET SIDE */
+#planet-side{position:absolute;right:0;top:0;width:50%;height:100%;display:flex;align-items:center;justify-content:center;opacity:0;}
+#planet-canvas{border-radius:50%;}
+#satellite-wrap{position:absolute;width:500px;height:500px;pointer-events:none;}
+.sat-orbit{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.06);left:50%;top:50%;transform:translate(-50%,-50%);}
+#satellite{position:absolute;font-size:0;width:28px;height:14px;}
+#rings-wrap{position:absolute;pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%);}
+
+/* INFO SIDE */
+#info-side{position:absolute;left:0;top:0;width:52%;height:100%;display:flex;align-items:center;justify-content:flex-start;padding-left:80px;opacity:0;}
+.info-inner{max-width:540px;width:100%;}
+.p-tag{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:5px;margin-bottom:14px;opacity:0;transform:translateY(20px);}
+.p-divider{height:1px;width:0;margin:12px 0;opacity:.5;}
+.p-name{font-family:'Orbitron',monospace;font-size:50px;font-weight:900;line-height:1.05;letter-spacing:1px;color:#fff;opacity:0;transform:translateY(30px);text-transform:uppercase;}
+.p-subtitle{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:600;letter-spacing:4px;margin-top:10px;opacity:0;transform:translateY(20px);text-transform:uppercase;}
+.p-bio{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:500;line-height:1.8;color:rgba(255,255,255,.88);margin-top:16px;opacity:0;transform:translateY(20px);}
+.p-meta{font-family:'Share Tech Mono',monospace;font-size:13px;color:rgba(255,255,255,.55);margin-top:10px;opacity:0;transform:translateY(20px);line-height:1.8;}
+.tags-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
+.tag{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;padding:7px 18px;border:1.5px solid;border-radius:25px;opacity:0;transform:translateY(10px);cursor:default;transition:transform .2s;}
+.tag:hover{transform:scale(1.07) translateY(0)!important;}
+
+/* SKILLS */
+.skills-scroll{max-height:70vh;overflow-y:auto;padding-right:8px;}
+.skills-scroll::-webkit-scrollbar{width:3px;}
+.skills-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px;}
+.skill-cat{margin-bottom:20px;opacity:0;transform:translateY(15px);}
+.cat-label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:rgba(255,255,255,.35);margin-bottom:10px;}
+.cat-badges{display:flex;flex-wrap:wrap;gap:8px;}
+.badge{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;letter-spacing:.5px;padding:5px 14px;border:1.5px solid;border-radius:20px;opacity:0;transform:scale(.9);}
+
+/* CAREER */
+.career-scroll{max-height:72vh;overflow-y:auto;padding-right:8px;}
+.career-scroll::-webkit-scrollbar{width:3px;}
+.career-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px;}
+.sec-heading{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:4px;color:rgba(255,255,255,.3);margin:20px 0 12px;display:flex;align-items:center;gap:10px;opacity:0;}
+.sec-heading::after{content:'';flex:1;height:1px;background:currentColor;opacity:.4;}
+.career-item{border-left:2px solid;padding-left:16px;margin-bottom:16px;opacity:0;transform:translateX(-15px);}
+.ci-role{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:1px;}
+.ci-co{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:600;color:rgba(255,255,255,.75);margin-top:3px;}
+.ci-period{font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;}
+.ci-desc{font-family:'Rajdhani',sans-serif;font-size:14px;color:rgba(255,255,255,.65);margin-top:6px;line-height:1.6;}
+
+/* PROJECTS */
+.projects-scroll{max-height:72vh;overflow-y:auto;padding-right:8px;}
+.projects-scroll::-webkit-scrollbar{width:3px;}
+.projects-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px;}
+.proj-card{background:rgba(255,255,255,.025);border:1.5px solid;border-radius:12px;padding:18px 22px;margin-bottom:14px;opacity:0;transform:translateY(20px);}
+.proj-name{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;letter-spacing:1.5px;}
+.proj-desc{font-family:'Rajdhani',sans-serif;font-size:15px;color:rgba(255,255,255,.6);margin-top:3px;}
+.proj-stack{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,.3);margin-top:8px;line-height:1.8;}
+.proj-bullets{margin-top:10px;list-style:none;}
+.proj-bullets li{font-family:'Rajdhani',sans-serif;font-size:14px;color:rgba(255,255,255,.78);padding:3px 0 3px 14px;position:relative;line-height:1.5;}
+.proj-bullets li::before{content:'›';position:absolute;left:0;opacity:.7;}
+.proj-btns{display:flex;gap:10px;margin-top:12px;}
+.proj-btn{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;padding:7px 18px;border:1.5px solid;border-radius:20px;cursor:pointer;background:transparent;text-decoration:none;transition:all .2s;}
+.proj-btn:hover{background:rgba(255,255,255,.08);}
+
+/* CONTACT */
+.contact-item{margin-bottom:22px;opacity:0;transform:translateY(15px);}
+.ci-lbl{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:rgba(255,255,255,.3);margin-bottom:6px;}
+.ci-val{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:600;letter-spacing:.5px;}
+.ci-val a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:2px;transition:border-color .2s;}
+.ci-val a:hover{border-color:currentColor;}
+.transmission{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;color:rgba(255,255,255,.25);margin-top:28px;opacity:0;}
+
+/* NEXT BUTTON */
+#next-btn{position:fixed;bottom:44px;right:80px;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;padding:13px 36px;border:2px solid;border-radius:35px;background:transparent;cursor:none;z-index:200;opacity:0;pointer-events:none;transition:background .2s;white-space:nowrap;}
+#next-btn:hover{background:rgba(255,255,255,.05);}
+#back-btn{position:fixed;bottom:100px;right:80px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;padding:10px 28px;border:1.5px solid rgba(255,255,255,.2);border-radius:35px;background:transparent;cursor:none;z-index:200;opacity:0;pointer-events:none;transition:all .2s;white-space:nowrap;color:rgba(255,255,255,.45);}
+#back-btn:hover{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.8);}
+
+/* SPACESHIP */
+#ship-wrap{position:fixed;z-index:50;pointer-events:none;}
+</style>
+</head>
+<body>
+<!-- CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-dot"></div>
+
+<!-- CANVASES -->
+<canvas id="bg-canvas"></canvas>
+<canvas id="trail-canvas"></canvas>
+<canvas id="debris-canvas"></canvas>
+
+<!-- LOADER -->
+<div id="loader">
+  <svg id="loader-ship-svg" width="64" height="96" viewBox="0 0 64 96" style="filter:drop-shadow(0 0 14px #00f5ff);margin-bottom:24px;">
+    <defs>
+      <radialGradient id="lhull" cx="40%" cy="30%" r="65%"><stop offset="0%" stop-color="#c8eeff"/><stop offset="40%" stop-color="#4499cc"/><stop offset="100%" stop-color="#112233"/></radialGradient>
+      <radialGradient id="lcockpit-g" cx="45%" cy="35%" r="55%"><stop offset="0%" stop-color="#eeffff"/><stop offset="50%" stop-color="#44aaff"/><stop offset="100%" stop-color="#001144"/></radialGradient>
+    </defs>
+    <g id="lpart-wings" opacity="0">
+      <path d="M20 36 L4 58 L6 64 L12 58 L18 46 Z" fill="#1a3366" stroke="#3366aa" stroke-width="1"/>
+      <path d="M44 36 L60 58 L58 64 L52 58 L46 46 Z" fill="#1a3366" stroke="#3366aa" stroke-width="1"/>
+    </g>
+    <g id="lpart-body" opacity="0">
+      <ellipse cx="32" cy="76" rx="8" ry="4" fill="#1a2233" stroke="#334455" stroke-width="1"/>
+      <path d="M32 6 C38 6 44 18 46 34 L44 60 L32 66 L20 60 L18 34 C20 18 26 6 32 6Z" fill="url(#lhull)" stroke="#55aadd" stroke-width="1"/>
+      <rect x="24" y="60" width="16" height="14" rx="3" fill="#1a2233" stroke="#334466" stroke-width="1"/>
+    </g>
+    <g id="lpart-cockpit" opacity="0">
+      <ellipse cx="32" cy="26" rx="8" ry="11" fill="url(#lcockpit-g)" stroke="#66ccff" stroke-width="1"/>
+      <ellipse cx="30" cy="23" rx="3.5" ry="5" fill="rgba(255,255,255,.35)"/>
+      <line x1="32" y1="6" x2="32" y2="1" stroke="#66ccff" stroke-width="1.5"/>
+      <circle cx="32" cy="1" r="2" fill="#00f5ff"/>
+    </g>
+    <g id="lpart-flame" opacity="0">
+      <ellipse cx="32" cy="82" rx="7" ry="12" fill="#ff5500" opacity=".85"/>
+      <ellipse cx="32" cy="81" rx="4.5" ry="8" fill="#ffaa00" opacity=".9"/>
+      <ellipse cx="32" cy="79" rx="2" ry="5" fill="#ffffff" opacity=".85"/>
+    </g>
+  </svg>
+  <div id="loader-pct" style="font-family:'Orbitron',monospace;font-size:32px;font-weight:700;color:#fff;margin-bottom:10px;">0%</div>
+  <div id="loader-bar-wrap"><div id="loader-bar"></div></div>
+  <div id="loader-text" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:4px;color:rgba(0,245,255,.7);margin-top:12px;">INITIALIZING SYSTEMS...</div>
+</div>
+
+<div class="corner c-tl"></div>
+<div class="corner c-tr"></div>
+<div class="corner c-bl"></div>
+<div class="corner c-br"></div>
+<div id="hud-tl">// PLANET AKHIL //</div>
+<div id="hud-tr">INITIALIZING...</div>
+<div id="hint">CLICK NEXT TO CONTINUE JOURNEY</div>
+
+<div id="breadcrumbs">
+  <div class="bcrumb" data-i="0" style="border-color:#00f5ff;color:#00f5ff"><span class="bcrumb-tip" style="color:#00f5ff">PLANET AKHIL</span>01</div>
+  <div class="bcrumb" data-i="1" style="border-color:#c800ff;color:#c800ff"><span class="bcrumb-tip" style="color:#c800ff">SKILL NEBULA</span>02</div>
+  <div class="bcrumb" data-i="2" style="border-color:#00ff88;color:#00ff88"><span class="bcrumb-tip" style="color:#00ff88">CAREER ORBIT</span>03</div>
+  <div class="bcrumb" data-i="3" style="border-color:#ff6a00;color:#ff6a00"><span class="bcrumb-tip" style="color:#ff6a00">PROJECT STATION</span>04</div>
+  <div class="bcrumb" data-i="4" style="border-color:#ff0080;color:#ff0080"><span class="bcrumb-tip" style="color:#ff0080">CONTACT VOID</span>05</div>
+</div>
+
+<div id="nav-dots">
+  <div class="ndot" data-i="0" style="border-color:#00f5ff"><span class="ndot-tip" style="color:#00f5ff">PLANET AKHIL</span></div>
+  <div class="ndot" data-i="1" style="border-color:#c800ff"><span class="ndot-tip" style="color:#c800ff">SKILL NEBULA</span></div>
+  <div class="ndot" data-i="2" style="border-color:#00ff88"><span class="ndot-tip" style="color:#00ff88">CAREER ORBIT</span></div>
+  <div class="ndot" data-i="3" style="border-color:#ff6a00"><span class="ndot-tip" style="color:#ff6a00">PROJECT STATION</span></div>
+  <div class="ndot" data-i="4" style="border-color:#ff0080"><span class="ndot-tip" style="color:#ff0080">CONTACT VOID</span></div>
+</div>
+
+<div id="scene">
+  <div id="info-side">
+    <div class="info-inner" id="info-inner"></div>
+  </div>
+  <div id="planet-side">
+    <div id="rings-wrap"></div>
+    <canvas id="planet-canvas" width="360" height="360"></canvas>
+    <div id="satellite-wrap">
+      <div class="sat-orbit" style="width:460px;height:460px;"></div>
+      <div id="satellite">
+        <svg width="28" height="14" viewBox="0 0 28 14">
+          <rect x="11" y="4" width="6" height="6" rx="1" fill="#aaccff" stroke="#5588ff" stroke-width=".8"/>
+          <rect x="0" y="5" width="10" height="4" rx="1" fill="#3366cc" stroke="#5588ff" stroke-width=".6"/>
+          <rect x="18" y="5" width="10" height="4" rx="1" fill="#3366cc" stroke="#5588ff" stroke-width=".6"/>
+          <circle cx="14" cy="7" r="1.5" fill="#ffee88"/>
+          <line x1="10" y1="7" x2="11" y2="7" stroke="#aaaaaa" stroke-width=".8"/>
+          <line x1="17" y1="7" x2="18" y2="7" stroke="#aaaaaa" stroke-width=".8"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SPACESHIP -->
+<div id="ship-wrap">
+<svg id="ship-svg" width="64" height="96" viewBox="0 0 64 96">
+  <defs>
+    <radialGradient id="hull" cx="40%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#c8eeff"/>
+      <stop offset="40%" stop-color="#4499cc"/>
+      <stop offset="100%" stop-color="#112233"/>
+    </radialGradient>
+    <radialGradient id="cockpit-g" cx="45%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#eeffff"/>
+      <stop offset="50%" stop-color="#44aaff"/>
+      <stop offset="100%" stop-color="#001144"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="32" cy="76" rx="8" ry="4" fill="#1a2233" stroke="#334455" stroke-width="1"/>
+  <path d="M32 6 C38 6 44 18 46 34 L44 60 L32 66 L20 60 L18 34 C20 18 26 6 32 6Z" fill="url(#hull)" stroke="#55aadd" stroke-width="1"/>
+  <path d="M20 36 L4 58 L6 64 L12 58 L18 46 Z" fill="#1a3366" stroke="#3366aa" stroke-width="1"/>
+  <path d="M44 36 L60 58 L58 64 L52 58 L46 46 Z" fill="#1a3366" stroke="#3366aa" stroke-width="1"/>
+  <line x1="6" y1="60" x2="16" y2="50" stroke="#4488cc" stroke-width=".6" opacity=".7"/>
+  <line x1="58" y1="60" x2="48" y2="50" stroke="#4488cc" stroke-width=".6" opacity=".7"/>
+  <ellipse cx="32" cy="26" rx="8" ry="11" fill="url(#cockpit-g)" stroke="#66ccff" stroke-width="1"/>
+  <ellipse cx="30" cy="23" rx="3.5" ry="5" fill="rgba(255,255,255,.35)"/>
+  <line x1="26" y1="18" x2="26" y2="54" stroke="#336688" stroke-width=".5" opacity=".5"/>
+  <line x1="38" y1="18" x2="38" y2="54" stroke="#336688" stroke-width=".5" opacity=".5"/>
+  <rect x="24" y="60" width="16" height="14" rx="3" fill="#1a2233" stroke="#334466" stroke-width="1"/>
+  <rect x="27" y="62" width="10" height="10" rx="2" fill="#0a0f1a"/>
+  <line x1="32" y1="6" x2="32" y2="1" stroke="#66ccff" stroke-width="1.5" opacity=".9"/>
+  <circle cx="32" cy="1" r="2" fill="#00f5ff" opacity=".9"/>
+  <circle cx="6" cy="61" r="2" fill="#ff4400" opacity=".9"/>
+  <circle cx="58" cy="61" r="2" fill="#ff4400" opacity=".9"/>
+  <g id="flame-group">
+    <ellipse id="f-outer" cx="32" cy="82" rx="7" ry="12" fill="#ff5500" opacity=".85"/>
+    <ellipse id="f-mid" cx="32" cy="81" rx="4.5" ry="8" fill="#ffaa00" opacity=".9"/>
+    <ellipse id="f-core" cx="32" cy="79" rx="2" ry="5" fill="#ffffff" opacity=".85"/>
+    <ellipse id="f-tip" cx="32" cy="88" rx="3" ry="5" fill="#ff2200" opacity=".5"/>
+    <ellipse cx="22" cy="69" rx="2.5" ry="4" fill="#ff4400" opacity=".6"/>
+    <ellipse cx="42" cy="69" rx="2.5" ry="4" fill="#ff4400" opacity=".6"/>
+  </g>
+</svg>
+</div>
+
+<button id="back-btn">‹ PREV PLANET</button>
+<button id="next-btn">LAUNCH TO NEXT PLANET ›</button>
+
+<script>
+function downloadResume(){const b64="JVBERi0xLjQKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUgo+PgplbmRvYmoKMiAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYSAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjEgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iagozIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhLUJvbGQgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0YyIC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKNCAwIG9iago8PAovQSA8PAovUyAvVVJJIC9UeXBlIC9BY3Rpb24gL1VSSSAoaHR0cHM6Ly9saW5rZWRpbi5jb20pCj4+IC9Cb3JkZXIgWyAwIDAgMCBdIC9SZWN0IFsgMzkwLjYwMDUgNzE5IDQyMi43MzA1IDcyOS4yIF0gL1N1YnR5cGUgL0xpbmsgL1R5cGUgL0Fubm90Cj4+CmVuZG9iago1IDAgb2JqCjw8Ci9BIDw8Ci9TIC9VUkkgL1R5cGUgL0FjdGlvbiAvVVJJIChodHRwczovL2dpdGh1Yi5jb20vQWtoaWwxNDMyNCkKPj4gL0JvcmRlciBbIDAgMCAwIF0gL1JlY3QgWyA0MzQuMzkyNSA3MTkgNTIwLjM3ODUgNzI5LjIgXSAvU3VidHlwZSAvTGluayAvVHlwZSAvQW5ub3QKPj4KZW5kb2JqCjYgMCBvYmoKPDwKL0EgPDwKL1MgL1VSSSAvVHlwZSAvQWN0aW9uIC9VUkkgKGh0dHBzOi8vbWFpbHZveC1zZXZlbi52ZXJjZWwuYXBwKQo+PiAvQm9yZGVyIFsgMCAwIDAgXSAvUmVjdCBbIDM4Mi45MzUgMjc1IDM5OC41MjQgMjg1LjIgXSAvU3VidHlwZSAvTGluayAvVHlwZSAvQW5ub3QKPj4KZW5kb2JqCjcgMCBvYmoKPDwKL0EgPDwKL1MgL1VSSSAvVHlwZSAvQWN0aW9uIC9VUkkgKGh0dHBzOi8vZ2l0aHViLmNvbS9Ba2hpbDE0MzI0L01haWx2b3gpCj4+IC9Cb3JkZXIgWyAwIDAgMCBdIC9SZWN0IFsgNDEwLjE4NiAyNzUgNDM2LjYzOCAyODUuMiBdIC9TdWJ0eXBlIC9MaW5rIC9UeXBlIC9Bbm5vdAo+PgplbmRvYmoKOCAwIG9iago8PAovQSA8PAovUyAvVVJJIC9UeXBlIC9BY3Rpb24gL1VSSSAoaHR0cHM6Ly9naXQtcm9hc3Rlci1qZXQudmVyY2VsLmFwcCkKPj4gL0JvcmRlciBbIDAgMCAwIF0gL1JlY3QgWyAzNzEuMTAzIDE0MiAzODYuNjkyIDE1Mi4yIF0gL1N1YnR5cGUgL0xpbmsgL1R5cGUgL0Fubm90Cj4+CmVuZG9iago5IDAgb2JqCjw8Ci9BIDw8Ci9TIC9VUkkgL1R5cGUgL0FjdGlvbiAvVVJJIChodHRwczovL2dpdGh1Yi5jb20vQWtoaWwxNDMyNC9naXQtcm9hc3RlcikKPj4gL0JvcmRlciBbIDAgMCAwIF0gL1JlY3QgWyAzOTguMzU0IDE0MiA0MjQuODA2IDE1Mi4yIF0gL1N1YnR5cGUgL0xpbmsgL1R5cGUgL0Fubm90Cj4+CmVuZG9iagoxMCAwIG9iago8PAovQW5ub3RzIFsgNCAwIFIgNSAwIFIgNiAwIFIgNyAwIFIgOCAwIFIgOSAwIFIgXSAvQ29udGVudHMgMTYgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCAxNSAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgCiAgL1RyYW5zIDw8Cgo+PiAvVHlwZSAvUGFnZQo+PgplbmRvYmoKMTEgMCBvYmoKPDwKL0EgPDwKL1MgL1VSSSAvVHlwZSAvQWN0aW9uIC9VUkkgKGh0dHBzOi8vZ2l0aHViLmNvbS9Ba2hpbDE0MzI0L1Nub3V0c3kpCj4+IC9Cb3JkZXIgWyAwIDAgMCBdIC9SZWN0IFsgMzEyLjUyOTUgNzQ3IDMzOC45ODE1IDc1Ny4yIF0gL1N1YnR5cGUgL0xpbmsgL1R5cGUgL0Fubm90Cj4+CmVuZG9iagoxMiAwIG9iago8PAovQW5ub3RzIFsgMTEgMCBSIF0gL0NvbnRlbnRzIDE3IDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMTUgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIAogIC9UcmFucyA8PAoKPj4gL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjEzIDAgb2JqCjw8Ci9QYWdlTW9kZSAvVXNlTm9uZSAvUGFnZXMgMTUgMCBSIC9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagoxNCAwIG9iago8PAovQXV0aG9yIChcKGFub255bW91c1wpKSAvQ3JlYXRpb25EYXRlIChEOjIwMjYwMzE2MTc0MTIzKzAwJzAwJykgL0NyZWF0b3IgKFwodW5zcGVjaWZpZWRcKSkgL0tleXdvcmRzICgpIC9Nb2REYXRlIChEOjIwMjYwMzE2MTc0MTIzKzAwJzAwJykgL1Byb2R1Y2VyIChSZXBvcnRMYWIgUERGIExpYnJhcnkgLSBcKG9wZW5zb3VyY2VcKSkgCiAgL1N1YmplY3QgKFwodW5zcGVjaWZpZWRcKSkgL1RpdGxlIChcKGFub255bW91c1wpKSAvVHJhcHBlZCAvRmFsc2UKPj4KZW5kb2JqCjE1IDAgb2JqCjw8Ci9Db3VudCAyIC9LaWRzIFsgMTAgMCBSIDEyIDAgUiBdIC9UeXBlIC9QYWdlcwo+PgplbmRvYmoKMTYgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggMjkyMgo+PgpzdHJlYW0KR2IhO2Y+QmVkXig0T1Q1ZklzUVhTSDBOR0YuOSdOJCNTLSk9cThvJkFsYDVrL08yYjVIbUJSPj8xWyloOTxuaklNJUI2P0xJcCZIXzNVcEdxPV85TlhxKSE+cCRLTGshY1UjTlwqbl82Ii43Qk0mJXJPT0c7LENqci0lJDgvJk0/SkBFVCR0M0Y7Q1ZMPlFlREU7MWp1KFYjYUZnViojNkAlLSQxITxkPC9fIUxFM0g8cWgwaUlZYlBRWDonXkFAPGE0S0RvVy1wYCNUTExbIV5jaVZkPTljKi1wPj08YkxZOShfPyJWVW1UREwtO15ccHIyam1BPjxfZmdtcylMWnAuPk1qVDcma09ebChnbF5zKWcwXl9AMjlrQzA1cjMsdHRwajo+Qj9GL3NBVGJGZG9dZE5RUCxnQkQ5JUpqZU9QUVhJPWApSj1cL0AxdD8rMTwqJC9rWFJaIzBkcC40ZDxcOlpQKSohRkBHNkVlMUlhNXJVZDMuOUo/IipkSSstRV5FNUBkRTlEbUU3WFdKZm1HOG04Pzk3MlFJdEE6SSJzLCc9L2s9c0ptZm51dG1INzpENC4oQzUlZj46OVFYVygsWWpaXmxLM1BScj45Pk4yREIiJ2RpLHNBTk9YTkwvclItO2ZxaHJyZlI2VzpkaVs5TicxSFJMIV0sY3IjR1pcP2olcDQ7MFdxMjdJS1wqXHQ4QFw1ZjFnN2MoOD91SyEkJ1UxbTFubTY1MWhqTy8uQWAzKCRXJm1GQnJZVG8qV1pDTVhRZ3U1cUttdCttL3NcYm5ec3AiOlc+Nk9AVmBeJkYzYSlEUEB0Kz0zV2tPVlM0LGglT1hkUUFpOG1MZTNBVW5VP24oOmNMI0hHOyQxKS5aKF83cmxrYDlWJD0yYnFoYyg8OnNbP2shcWtzRiwmNExkXWlbKFdOKy9CX104UjFzV15SQ2hWLW1raUgiKyxQNUs4O2MwTzFVM1ZkZjI8OFE0LTwoOjc3LGRuU0VSTUZNOz1UOEhfcyRnMVVHdS9FRlVFNlttLWhgP3BwNnJvZ0lpWlJFLjZSUDJac3I6YVFKVSZKNUxGYms2XV1NRm5NQGh0V1dpXmgpPGYycmNfbDIucEJNZy5SUFxGb29vV1QjT01KWms8Oks9LmpURVYiZGJRVSpWaS4zJyZxOTFTJ2RGU2szbSo6ZzljMTtIVjtIS1dgJnBacCwzW2hgZCpOSlxmKWpLQ1M/ZWUrS0MxYls7NmJrNltKVVlDMS5QI2ctZmVUTj1PPjtsInA/RydGNmo4UENoUkkxVUtTPltlViZNNEBPYVohXk8yV1JwRG5HSl8hYE8zYVxbclFvXSgyI09nSyxBOCNOZy45bXJARi51Rmg8cGVGI1dzSl5KTilsTSt0X1tLU0lXOyZIVFZOLCpaSGRIPXIpXy0hZ24wODBHNCtZakdXKyVIPVA9LWZaUUJiVTdvOjVQL2guWFJaMyQ8UHJtb0k/ZnE4ZS5zTkBvXkJxRys2SkQzJjZwcSk2YypSZEBLRUhfTiFlayIrXF8mO0hLSmxrLlEmJFZLKGtdKVBFXHJVU04rZiJsUUd0cCdAZ2BWPjtGbl0yN2sjPmwmM21oYSUqby5WR0tBVnBaMF9EdWcmJE4sLjJTRDcnNWlxWEFhNyw1WUE6RFowOi0xOyNZamRGPCdpQTBjUEkncycrVV1EIz0jRyJXbTIqJFZrWD5FXFJYUlZaSGtoTmdMWnIyXSlLVGhHWlRPYGFlVCtfYWRQbUlhWUszZmFzPG1UNzg4TnUoYEBEPSFMaSJyOjo/TmZDLCFQcm08PCozVzQmJS9QPEMqPGprOWE/UDQ/SDhDSmRLTihYc1xoXz5tb2QrVlMjKFoxJ2BTInFXbWFaRCw4KCdRJGEjcy1XLidtYmBPMWE5WD85Ikg5Xj5Lal1XUytvR1JsLmdTTiQ3RSppYllTKmxMaiczVDw2dCx1I2ZdImVUaGxqIyFjUmBFUzhwNEU7Qm8zJFwqZ2tpMWFlITE4T3IjLEhlLygtJ05UI3QmOnI+L2MpbXVHMmNwWSJPUFQsUDEvM2NuWzBLO2lfNExrMy1oNEouLj5SQEVCcFdPQGsoXi1hO15iPjk0T10/PXJKck8oY2M+dXMtO0dUNHExP1wtUUFKUTs0PkQnKykoLDxZLm0nKCU+QCNnNCchaSRAPTZKdWghcWJkQThkLixoVDF0Xy9La0kwSWUoWFheOUBMQExdTW1hSlAyYF1taiMpZFUiI0FGMyNlUTRRaicuWXIvL29OamZdcm90KTwoYmteVD9WXDJKQW9HYWEmb0ssWi4xdCtEJ2hZKnBtQHNROC41TERsJTdLRD1obXJsWz5eTiotZUVcU1lQamVbSmJSJV06UmU7JlBfayJDZmg9NkBWRzdgQCJJcHBCb2s7Uz8iP25NTWs9TiNwOERESDBXcSJTOEQ2SSlaVzViN1pYalFxOGEyLkZqO0xSMy5xbEhIO14tNj1nclYnTG5tS3QoUWJYWSozNHRxc1ZvSCwiQjs6MUosVz5dbEk8VipcYGklViRxVU1LPyo7bUgnO01nRkdsWD8jZDIrWkFRRGssSlhTVj4vPFwsT1I1Um1gO1ZecnMjWWVZdCk6dVZbczVQX0VYZSo5Qjo4bmwtRSZWZig5XChDaTVcPUMhI2tfSWNDLWNxOE8xaWtpMlEvTkxlNSVCYWQqX0tzP2kqIlxrc0FSXyJwblMpQEUlTSUiTU8pIip0S2JBUUAzXkZISWouQFJZJSw8dWIpQWFBUGNjIT1JLyM9N2hPJDpkaWM8SlMjTWphOidxX1dcTXE1LUg+QCtpZ1VUVF5JKWskIy5GUjFQKiJMOFNIcEQ7Vi5YPFleXmBTWjklXkFiKltxXi4jMilZUWEhJz89Q3QnQWBcOW5fUCFRdU01OWZBJVlMKmNJKlBBZC8vNV1HVyVNWFU3VSpZZT9ERl1rLVZXRCdRVUBAZ100XWYjUi9pJkVATVckPEFtVjRGZ0ROc0NvLic5LmMuI1pHVT48bTtsTVRVNj1rQk07WGc3cio7Lk5QP2c2RT9TKnMmPEoqTTVDV2YyYzJqYV8waVlwUXBDZWIqZTFeVHIqcSdAWVhJVCxnbVpuYVsrXktDcFw+KEtXIV1bXyYyUChwUiNSaThZaSdfI2EyNSotUl5SQ1MjPWRtKlY6WXU1OD0sbCQ/NilzKzg5czpsXjtjJkhqViQlK0R0ZG5cKjRiXGlqaz9oTDdrQitpSCsnZVVOMD9jTjMtZCcyMSomcksiRiZeZ2NvNlNoIj5gYFYhMyhXWGZKbio/MUZfWEQvRWFyKWB0cFZTaXFbZHVOdEhTSi4nNkA1XSNnQDVTYVthR2tvLSxgcy0qPi1ydFVwaDBUPSpgaUg6OCw6c25VX2U8aS9BYylGMURfVzckLzMvXkNNLm8hQkRJMU0yKCZcZ3NAVVBlXFY2Uj1rPUlnVGJNVkhyMU4zLVJXJGo9MGYqVlMjaHRtUVpzS00yTXFUNj4wZjsoaUFWPUxmZUVEKWZiQHI3WSwkOSkucVg3cSgxQylmXzdTK2pVQEAqXWhuSGo3SltqMUJRbWVrKDpWNmovTllhRUMiXlRrXHA3ck4+XjhYOjxPSC5VXj4wPS9DbC8nJFdWVlElUE1ALj9jcGJLZTAsZV1ULFUtalc4MWkqUFcvL004UUIzNyNKYC9OPk1yQDhOU0I/a2lWaEJoIT9sZilyOSFRUEVROHFbcUEha0U3Rkc2MFkkIkpeZE5sTGsyQk03XGJgZ0lNW2JrLVU3YmByOGdGMzJrN2hXM2djVUxuPjVCQ2VSYGpTdGU/QF8uciYsMWdTcVsrbFZITy9SZFZPWG1IOixgKFo4SGYzbjUhTTVzdH4+ZW5kc3RyZWFtCmVuZG9iagoxNyAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAxMzU0Cj4+CnN0cmVhbQpHYXUwQzlsbztSJkFANy5vUCc1IkdzJ2EzSS1jZ20rajpNN0AmTl84N0cqMyordFNkI19jIW0sSVRzW25BNCFyLj1UVlQqKDYtbDVvaSgyODVvbmpTckNrY0IyX2Zdb290Xi9CP0BqISchUThJYmApZjErXUo7ODNUYlc2YE81VydWbl9XZEolNiZyYkQxPVtWTyhrKT8tK0ZFXUg/R0snVzg1R2VAZ0A8V2pNMlM7K10wRmRYcldtY1BlLGI7IiwiQC84Sk1hJzdDRWotKVtDOEtVXk5uRkY6OCRNRSIyPl1XO1hFRVBkZGUzS184KFooTV5HWDdMM25QcFZMT18vaVtEPFkjcz5ccGljaS0pbm9bcm8vZDIlWSNrP1k5YjJdZWIxLnFdIjw/ZCVUN0hWUkw0ckU/Ti8xRTJjK1ItY0RANEJAJkJMaSoyM0gzYWtGPGUzW1dETnFjVCtYU0FnMmwoT0teLVYvNmItLS4tR2I9WjRvaFpFZkc7KiNuIipMI3VGZUBNKFUmSkpNVWxPPCZSXyciPUttPjw1TVxXazlVcEtqVzhCLUJxOXM9QWNFVkJVTk9sSFJWIUlaKj1CKDInSFYnJiQlQ2gpIVdJaDlBIUonOig3W2ExcD1LVjQ7ZVtKQEFdViojSkYmTWYzQ2dTKThPU1tZTURNUUQkYmNqaVpoJSUqbidfYS1Rb3JxMUFxTUwkNydJZlUxVz5UamRoMTBQUGRIW2YiXURATD9mPW9ZKDM8KlRPY05JdFJxPSZoJFRmTiUvPEVSTVA6KjYsUSxDM1ZbbS1uQklCKHBMNmM5NlRhK0NRKkt1X1JeOlZuUiYrPHFpNlpJTyZJQVUwdFg2VEBgXikkPE09Oi1UVSpVbydsQE5eUkNyQkFXbHBHbG1COERYYXJbcTBRQDFHXWFEO1tdcyJTMFQvSDFVTCNsIzRcVlRNXjxwY0poLF8ncyNbQDVsYkVeaCJpaTw2I100OldTWzJVXF4kdDInLGIzVWU1JkdjUzhMWmxxcUs+dWwsMC8+K3BZVUE6PEh0XW0qKChrO2pBZkYvV0FJIV1vXS4jVU8yTV03bjtVNjkqSUdfJipNZXVMT2ZQYitKXkhPLiVbZTlPWFknaFAiOzc3MFJWXWEsLm1bSm5RMTlGNnVdLFpZUFVWQE4/WF9DXjtmSF1fNmttS1NuYmw0NShVVF5IX1w1SmYpVmdkRDJRZEtFdEM3SS1eXkklNl5LKUZYZFY4YWo4ZWdFOlwpTUslVGFdWkFkKVFpOCxsPGhTLjhQbidSKG4/NUNlSlRLIilcW1c9VDZNNTA6ZzFzKioudUYzaEFzRk5FJ0hPTWlIMXVpOUZJRitsZmxdR1RiS14iTyNXa0xRRWdEYFQmPDIoOyZFNFUxTV1kKExnZ1phQkhbXSZNYC4ubzxNSyI6YTd0YXRsJGssRjBrNU03SU5MQi1HanFHJVIrSDAiQzQ5SFZWS1kmS0hXWFszU2YtX1NVZ1tnJF5yKyYoV0ZsInVoUGBJaCdoWTZiRVBUWCY0KllLNjp0TCxIKm9fdWNJWjZGITIhXDFuI3MrRjUqMWBSJGdaLyw9UUE/YSxYQjspQTJyMkhPbl1MTFgoRFYwR2AqJmddOklHX2swdCVgak1OZjBITlZBLSs2PDdeTkNnPXRcTjRZOzRAczlvMm0rT2JYXFpoaDchcmtFPVUlXVVfQScwXjBKSkZjTCQ5ISFUclRfX10rQnRPKkomNzpPP0pyN1MnNjsuIVBbUWdRQS9obmA8X25DYGc2LUZKJXNkWj4uZn4+ZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgMTgKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDYxIDAwMDAwIG4gCjAwMDAwMDAxMDIgMDAwMDAgbiAKMDAwMDAwMDIwOSAwMDAwMCBuIAowMDAwMDAwMzIxIDAwMDAwIG4gCjAwMDAwMDA0ODUgMDAwMDAgbiAKMDAwMDAwMDY1OCAwMDAwMCBuIAowMDAwMDAwODMyIDAwMDAwIG4gCjAwMDAwMDEwMTEgMDAwMDAgbiAKMDAwMDAwMTE4NyAwMDAwMCBuIAowMDAwMDAxMzcwIDAwMDAwIG4gCjAwMDAwMDE2MTQgMDAwMDAgbiAKMDAwMDAwMTc5NiAwMDAwMCBuIAowMDAwMDAyMDExIDAwMDAwIG4gCjAwMDAwMDIwODEgMDAwMDAgbiAKMDAwMDAwMjM2MiAwMDAwMCBuIAowMDAwMDAyNDMwIDAwMDAwIG4gCjAwMDAwMDU0NDQgMDAwMDAgbiAKdHJhaWxlcgo8PAovSUQgCls8MjMxNTVkYWI4YjYxMGZmMjM4OWI1YzVjMDU3NmVkMDM+PDIzMTU1ZGFiOGI2MTBmZjIzODliNWM1YzA1NzZlZDAzPl0KJSBSZXBvcnRMYWIgZ2VuZXJhdGVkIFBERiBkb2N1bWVudCAtLSBkaWdlc3QgKG9wZW5zb3VyY2UpCgovSW5mbyAxNCAwIFIKL1Jvb3QgMTMgMCBSCi9TaXplIDE4Cj4+CnN0YXJ0eHJlZgo2ODkwCiUlRU9GCg==";const bin=atob(b64);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);const blob=new Blob([buf],{type:"application/pdf"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="Vallabhani_Akhil_Resume.pdf";document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},100);}
+
+gsap.registerPlugin(MotionPathPlugin);
+
+// ============ DATA ============
+const PLANETS = [
+  {id:0,name:'PLANET AKHIL',color:'#00f5ff',hud:'// PLANET AKHIL //',next:'LAUNCH TO SKILL NEBULA ›',
+   colors:['#001a2a','#003355','#00aacc','#005577','#002233'],rings:false,hasRings:false},
+  {id:1,name:'SKILL NEBULA',color:'#c800ff',hud:'// SKILL NEBULA //',next:'LAUNCH TO CAREER ORBIT ›',
+   colors:['#1a0028','#440066','#9900cc','#6600aa','#220033'],rings:false,hasRings:false},
+  {id:2,name:'CAREER ORBIT',color:'#00ff88',hud:'// CAREER ORBIT //',next:'LAUNCH TO PROJECT STATION ›',
+   colors:['#001a10','#003322','#00aa55','#005533','#001a0a'],rings:false,hasRings:false},
+  {id:3,name:'PROJECT STATION',color:'#ff6a00',hud:'// PROJECT STATION //',next:'LAUNCH TO CONTACT VOID ›',
+   colors:['#1a0800','#441500','#cc5500','#882200','#1a0400'],rings:true,hasRings:true},
+  {id:4,name:'CONTACT VOID',color:'#ff0080',hud:'// CONTACT VOID //',next:null,
+   colors:['#1a0015','#440030','#cc0066','#880044','#1a000f'],rings:false,hasRings:false}
+];
+
+let currentPlanet = -1;
+let visitedPlanets = [];
+let isAnimating = false;
+let shipX = window.innerWidth / 2;
+let shipY = window.innerHeight + 100;
+let idleTL = null;
+let satAngle = 0;
+
+// ============ CANVASES ============
+const bgCanvas = document.getElementById('bg-canvas');
+const bgCtx = bgCanvas.getContext('2d');
+const trailCanvas = document.getElementById('trail-canvas');
+const trailCtx = trailCanvas.getContext('2d');
+const planetCanvas = document.getElementById('planet-canvas');
+const pCtx = planetCanvas.getContext('2d');
+
+function resizeAll(){
+  bgCanvas.width = trailCanvas.width = window.innerWidth;
+  bgCanvas.height = trailCanvas.height = window.innerHeight;
+}
+resizeAll();
+window.addEventListener('resize', resizeAll);
+
+// ============ STARS & BG ============
+const stars = [];
+for(let i=0;i<160;i++){
+  stars.push({
+    x:Math.random()*window.innerWidth,
+    y:Math.random()*window.innerHeight,
+    r:Math.random()<0.1?1.8:Math.random()<0.3?1.2:0.7,
+    baseA:Math.random()*0.5+0.2,
+    phase:Math.random()*Math.PI*2,
+    speed:Math.random()*0.02+0.005
+  });
+}
+
+// Occasional meteors
+const meteors = [];
+function spawnMeteor(){
+  meteors.push({x:window.innerWidth+50,y:Math.random()*window.innerHeight*0.6,vx:-(Math.random()*8+6),vy:Math.random()*3+1,life:1,len:Math.random()*80+40});
+}
+setInterval(spawnMeteor, 4000);
+
+let bgTime = 0;
+function drawBg(){
+  bgCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
+  bgCtx.fillStyle='#04040c';
+  bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height);
+  // nebula clouds
+  const nbs=[
+    {x:0.1,y:0.1,r:300,c:'rgba(0,80,180,0.06)'},{x:0.85,y:0.2,r:250,c:'rgba(120,0,200,0.05)'},
+    {x:0.5,y:0.8,r:280,c:'rgba(0,150,100,0.04)'},{x:0.7,y:0.6,r:200,c:'rgba(200,50,0,0.04)'}
+  ];
+  nbs.forEach(n=>{
+    const g=bgCtx.createRadialGradient(n.x*bgCanvas.width,n.y*bgCanvas.height,0,n.x*bgCanvas.width,n.y*bgCanvas.height,n.r);
+    g.addColorStop(0,n.c); g.addColorStop(1,'transparent');
+    bgCtx.fillStyle=g; bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height);
+  });
+  // stars
+  bgTime+=0.016;
+  stars.forEach(s=>{
+    const a=s.baseA+Math.sin(bgTime*s.speed*60+s.phase)*0.3;
+    bgCtx.globalAlpha=Math.max(0,a);
+    bgCtx.fillStyle='#ffffff';
+    bgCtx.beginPath();
+    bgCtx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    bgCtx.fill();
+    if(s.r>1.5){
+      bgCtx.globalAlpha=a*0.3;
+      bgCtx.beginPath();
+      bgCtx.arc(s.x,s.y,s.r*2.5,0,Math.PI*2);
+      bgCtx.fill();
+    }
+  });
+  // meteors
+  bgCtx.globalAlpha=1;
+  for(let i=meteors.length-1;i>=0;i--){
+    const m=meteors[i];
+    m.x+=m.vx; m.y+=m.vy; m.life-=0.015;
+    if(m.life<=0){meteors.splice(i,1);continue;}
+    const g2=bgCtx.createLinearGradient(m.x,m.y,m.x-m.vx*6,m.y-m.vy*6);
+    g2.addColorStop(0,`rgba(255,255,220,${m.life*0.9})`);
+    g2.addColorStop(1,'transparent');
+    bgCtx.strokeStyle=g2; bgCtx.lineWidth=1.5;
+    bgCtx.beginPath(); bgCtx.moveTo(m.x,m.y); bgCtx.lineTo(m.x+m.len,m.y-m.len*0.15); bgCtx.stroke();
+  }
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+// ============ PLANET RENDERER ============
+let planetOffset = 0;
+let currentPlanetData = null;
+let planetAnimFrame = null;
+
+function drawPlanet(pData){
+  const c = pCtx;
+  const W = planetCanvas.width, H = planetCanvas.height;
+  const cx = W/2, cy = H/2, R = 160;
+  c.clearRect(0,0,W,H);
+
+  const cols = pData.colors;
+  const t = planetOffset;
+
+  // atmosphere glow
+  const ag = c.createRadialGradient(cx,cy,R*0.8,cx,cy,R*1.5);
+  ag.addColorStop(0,pData.color.replace('#','rgba(').replace(/(..)(..)(..)$/,(_,r,g,b)=>`${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},0.35)`));
+  ag.addColorStop(1,'transparent');
+  c.fillStyle=ag; c.fillRect(0,0,W,H);
+
+  // clip to circle
+  c.save(); c.beginPath(); c.arc(cx,cy,R,0,Math.PI*2); c.clip();
+
+  // base
+  const bg = c.createRadialGradient(cx-40,cy-40,0,cx,cy,R);
+  bg.addColorStop(0,cols[2]); bg.addColorStop(0.5,cols[1]); bg.addColorStop(1,cols[0]);
+  c.fillStyle=bg; c.fillRect(0,0,W,H);
+
+  // terrain bands - moving
+  for(let band=0;band<8;band++){
+    const y0 = cy - R + band*(R*2/8);
+    const bw = R*2/8;
+    const alpha = 0.08+Math.sin(band*1.3)*0.05;
+    c.fillStyle=`rgba(255,255,255,${alpha})`;
+    c.fillRect(cx-R,y0,R*2,bw*0.4);
+  }
+
+  // surface craters / features
+  const features = [
+    {ox:-50,oy:-40,r:28},{ox:40,oy:20,r:18},{ox:-20,oy:50,r:22},
+    {ox:60,oy:-50,r:14},{ox:-70,oy:30,r:12},{ox:20,oy:-60,r:16}
+  ];
+  features.forEach(f=>{
+    const fx = cx + f.ox + Math.sin(t*0.5+f.ox)*3;
+    const fy = cy + f.oy + Math.cos(t*0.3+f.oy)*2;
+    if(fx-f.r > cx-R && fx+f.r < cx+R && fy-f.r > cy-R && fy+f.r < cy+R){
+      const cg = c.createRadialGradient(fx-f.r*0.3,fy-f.r*0.3,0,fx,fy,f.r);
+      cg.addColorStop(0,`rgba(255,255,255,0.06)`);
+      cg.addColorStop(0.6,`rgba(0,0,0,0.18)`);
+      cg.addColorStop(1,`rgba(0,0,0,0.08)`);
+      c.fillStyle=cg; c.beginPath(); c.ellipse(fx,fy,f.r,f.r*0.7,0,0,Math.PI*2); c.fill();
+    }
+  });
+
+  // cloud layer
+  for(let cl=0;cl<5;cl++){
+    const clx = cx + Math.cos(t*0.4+cl*1.3)*R*0.6;
+    const cly = cy + Math.sin(cl*0.9)*R*0.4;
+    const clr = 30+cl*12;
+    const clog = c.createRadialGradient(clx,cly,0,clx,cly,clr);
+    clog.addColorStop(0,`rgba(255,255,255,0.1)`);
+    clog.addColorStop(1,'transparent');
+    c.fillStyle=clog; c.fillRect(0,0,W,H);
+  }
+
+  // polar cap
+  const pcg = c.createRadialGradient(cx,cy-R+20,0,cx,cy-R+20,50);
+  pcg.addColorStop(0,'rgba(255,255,255,0.55)');
+  pcg.addColorStop(1,'transparent');
+  c.fillStyle=pcg; c.fillRect(0,0,W,H);
+
+  // terminator (shadow edge)
+  const sg = c.createLinearGradient(cx+R*0.3,cy-R,cx+R,cy+R);
+  sg.addColorStop(0,'transparent');
+  sg.addColorStop(0.6,'rgba(0,0,10,0.3)');
+  sg.addColorStop(1,'rgba(0,0,10,0.7)');
+  c.fillStyle=sg; c.fillRect(0,0,W,H);
+
+  c.restore();
+
+  // specular highlight
+  const hl = c.createRadialGradient(cx-60,cy-60,0,cx-60,cy-60,90);
+  hl.addColorStop(0,'rgba(255,255,255,0.18)');
+  hl.addColorStop(1,'transparent');
+  c.save(); c.beginPath(); c.arc(cx,cy,R,0,Math.PI*2); c.clip();
+  c.fillStyle=hl; c.fillRect(0,0,W,H);
+  c.restore();
+
+  // outer glow ring
+  const og = c.createRadialGradient(cx,cy,R,cx,cy,R+30);
+  og.addColorStop(0,pData.color.replace('#','rgba(').replace(/(..)(..)(..)$/,(_,r,g,b)=>`${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},0.4)`));
+  og.addColorStop(1,'transparent');
+  c.fillStyle=og; c.beginPath(); c.arc(cx,cy,R+30,0,Math.PI*2); c.fill();
+
+  // rings for planet 4
+  if(pData.hasRings){
+    c.save();
+    c.translate(cx,cy);
+    c.scale(1,0.28);
+    for(let ri=0;ri<4;ri++){
+      const rr=R*1.3+ri*22;
+      c.strokeStyle=`rgba(${ri%2?200:180},${ri%2?150:130},80,${0.35-ri*0.06})`;
+      c.lineWidth=8+ri*2;
+      c.beginPath(); c.arc(0,0,rr,0,Math.PI*2); c.stroke();
+    }
+    c.restore();
+  }
+}
+
+function animatePlanet(){
+  if(!currentPlanetData) return;
+  planetOffset += 0.008;
+  drawPlanet(currentPlanetData);
+  planetAnimFrame = requestAnimationFrame(animatePlanet);
+}
+
+// ============ SATELLITE ============
+function animateSat(){
+  satAngle += 0.012;
+  const orbitR = 230;
+  const sat = document.getElementById('satellite');
+  const wrap = document.getElementById('satellite-wrap');
+  const wRect = wrap.getBoundingClientRect();
+  const cx = 250, cy = 250;
+  const sx = cx + Math.cos(satAngle)*orbitR - 14;
+  const sy = cy + Math.sin(satAngle)*orbitR*0.38 - 7;
+  sat.style.position='absolute';
+  sat.style.left=sx+'px';
+  sat.style.top=sy+'px';
+  sat.style.transform=`rotate(${satAngle*10}deg)`;
+  sat.style.opacity = Math.sin(satAngle)*0.3+0.7;
+  requestAnimationFrame(animateSat);
+}
+animateSat();
+
+// ============ TRAIL PARTICLES ============
+let particles = [];
+let trailActive = false;
+let trailCol = '#00f5ff';
+
+function spawnTrail(){
+  if(!trailActive) return;
+  const wrap = document.getElementById('ship-wrap');
+  const r = wrap.getBoundingClientRect();
+  const sx = r.left + r.width/2;
+  const sy = r.top + r.height*0.88;
+  // main flame trail
+  for(let i=0;i<6;i++){
+    particles.push({
+      x:sx+(Math.random()-0.5)*12,y:sy+(Math.random()-0.5)*6,
+      vx:(Math.random()-0.5)*2, vy:Math.random()*3+2,
+      life:1, size:Math.random()*7+3,
+      type:'fire', hue:Math.random()<0.5?'255,100,0':'255,200,0'
+    });
+  }
+  // smoke
+  for(let i=0;i<3;i++){
+    particles.push({
+      x:sx+(Math.random()-0.5)*18,y:sy+10,
+      vx:(Math.random()-0.5)*1.5, vy:Math.random()*2+1,
+      life:0.8, size:Math.random()*14+8,
+      type:'smoke'
+    });
+  }
+  // sparks
+  if(Math.random()<0.4){
+    particles.push({
+      x:sx,y:sy,
+      vx:(Math.random()-0.5)*6, vy:Math.random()*5+2,
+      life:0.6, size:2,
+      type:'spark'
+    });
+  }
+}
+
+function drawTrail(){
+  trailCtx.clearRect(0,0,trailCanvas.width,trailCanvas.height);
+  spawnTrail();
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx; p.y+=p.vy; p.life-=0.03; p.size*=0.97;
+    if(p.life<=0){particles.splice(i,1);continue;}
+    trailCtx.save();
+    if(p.type==='fire'){
+      trailCtx.globalAlpha=p.life*0.9;
+      trailCtx.shadowBlur=12; trailCtx.shadowColor=`rgb(${p.hue})`;
+      trailCtx.fillStyle=`rgba(${p.hue},${p.life})`;
+      trailCtx.beginPath(); trailCtx.arc(p.x,p.y,p.size,0,Math.PI*2); trailCtx.fill();
+      trailCtx.fillStyle=`rgba(255,255,200,${p.life*0.5})`;
+      trailCtx.beginPath(); trailCtx.arc(p.x,p.y,p.size*0.35,0,Math.PI*2); trailCtx.fill();
+    } else if(p.type==='smoke'){
+      trailCtx.globalAlpha=p.life*0.25;
+      trailCtx.fillStyle=`rgba(180,180,180,1)`;
+      trailCtx.beginPath(); trailCtx.arc(p.x,p.y,p.size,0,Math.PI*2); trailCtx.fill();
+    } else {
+      trailCtx.globalAlpha=p.life;
+      trailCtx.fillStyle='#ffee88';
+      trailCtx.shadowBlur=6; trailCtx.shadowColor='#ffaa00';
+      trailCtx.beginPath(); trailCtx.arc(p.x,p.y,p.size,0,Math.PI*2); trailCtx.fill();
+    }
+    trailCtx.restore();
+  }
+  requestAnimationFrame(drawTrail);
+}
+drawTrail();
+
+// ============ SHIP SETUP ============
+const shipWrap = document.getElementById('ship-wrap');
+gsap.set(shipWrap,{x: window.innerWidth/2-32, y: window.innerHeight+120});
+
+// Idle flame anim
+function startIdleFlame(){
+  gsap.killTweensOf(['#f-outer','#f-mid','#f-core','#f-tip']);
+  gsap.to('#f-outer',{scaleY:1.25,scaleX:0.85,opacity:0.75,duration:0.14,repeat:-1,yoyo:true,ease:'power1.inOut',transformOrigin:'50% 0%'});
+  gsap.to('#f-mid',{scaleY:1.3,scaleX:0.9,opacity:0.85,duration:0.11,repeat:-1,yoyo:true,ease:'power1.inOut',transformOrigin:'50% 0%',delay:.03});
+  gsap.to('#f-core',{scaleY:1.4,opacity:0.9,duration:0.09,repeat:-1,yoyo:true,ease:'power1.inOut',transformOrigin:'50% 0%',delay:.05});
+  gsap.to('#f-tip',{scaleY:1.2,opacity:0.4,duration:0.16,repeat:-1,yoyo:true,ease:'power1.inOut',transformOrigin:'50% 0%'});
+}
+
+function bigFlame(){
+  gsap.killTweensOf(['#f-outer','#f-mid','#f-core','#f-tip']);
+  gsap.to('#f-outer',{scaleY:3,scaleX:1.4,opacity:1,duration:0.25,transformOrigin:'50% 0%'});
+  gsap.to('#f-mid',{scaleY:2.5,scaleX:1.2,opacity:1,duration:0.2,transformOrigin:'50% 0%'});
+  gsap.to('#f-core',{scaleY:2,opacity:1,duration:0.15,transformOrigin:'50% 0%'});
+}
+
+// Idle bob
+let idleBob = null;
+function startIdleBob(){
+  if(idleBob) idleBob.kill();
+  idleBob = gsap.to(shipWrap,{x:"+=18",duration:3.5,repeat:-1,yoyo:true,ease:"sine.inOut"});
+}
+
+// ============ CONTENT TEMPLATES ============
+function getContent(idx){
+  const p = PLANETS[idx];
+  const col = p.color;
+  const hexToRgb = h => {
+    const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);
+    return `${r},${g},${b}`;
+  };
+  const rgb = hexToRgb(col);
+
+  if(idx===0) return `
+    <div class="p-tag" style="color:${col}">//&nbsp; PLANET — 001 &nbsp;//</div>
+    <div class="p-divider" style="background:${col}"></div>
+    <div class="p-name">VALLABHANI<br>AKHIL</div>
+    <div class="p-subtitle" style="color:${col}">FULL STACK DEVELOPER &nbsp;/&nbsp; CSE FINAL YEAR</div>
+    <div class="p-divider" style="background:${col}"></div>
+    <div class="p-bio">Final-year B.Tech CSE at Parul University.<br>Building production-grade apps — MERN stack,<br>AI API integration &amp; scalable systems.</div>
+    <div class="p-meta">📍 Hyderabad, Telangana<br>✉ akhilvallabhani@gmail.com<br>GPA: 7.64 (CSE) &nbsp;|&nbsp; 8.60 (Blockchain)</div>
+    <div class="tags-row">
+      <span class="tag" style="color:${col};border-color:rgba(${rgb},.5);background:rgba(${rgb},.08)">MERN STACK</span>
+      <span class="tag" style="color:#ffffff;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.05)">AI INTEGRATION</span>
+      <span class="tag" style="color:${col};border-color:rgba(${rgb},.5);background:rgba(${rgb},.08)">FULL STACK</span>
+      <span class="tag" style="color:#ffe066;border-color:rgba(255,224,102,.4);background:rgba(255,224,102,.06)">BLOCKCHAIN</span>
+    </div>
+    <a class="resume-btn" id="resume-dl" href="javascript:void(0)" onclick="downloadResume()" style="color:${col};border-color:rgba(${rgb},.5)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M7 9l-3-3M7 9l3-3M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      DOWNLOAD RESUME
+    </a>`;
+
+  if(idx===1){
+    const cats=[
+      {l:'WEB',b:['HTML5','CSS3','JavaScript','React','Node.js','Express','REST APIs','Firebase']},
+      {l:'DATABASES',b:['MongoDB','SQL','Firebase Firestore']},
+      {l:'AI & ML',b:['Python','NumPy','Groq API','Gemini API','Machine Learning','Neural Networks']},
+      {l:'GAME DEV',b:['Unity 2D','Blender Basics']},
+      {l:'CORE',b:['Java','OOP','Git/GitHub','Postman','DSA','Docker','JIRA']},
+      {l:'AUTOMATION',b:['Selenium','PyTest']},
+      {l:'AI TOOLS',b:['ChatGPT','Claude','Gemini','Cursor']}
+    ];
+    return `
+    <div class="p-tag" style="color:${col}">//&nbsp; PLANET — 002 &nbsp;//</div>
+    <div class="p-divider" style="background:${col}"></div>
+    <div class="p-name" style="font-size:44px">SKILL NEBULA</div>
+    <div class="p-subtitle" style="color:${col}">TECH ARSENAL</div>
+    <div class="p-divider" style="background:${col}"></div>
+    <div class="skills-scroll">
+      ${cats.map(cat=>`
+      <div class="skill-cat">
+        <div class="cat-label">${cat.l}</div>
+        <div class="cat-badges">${cat.b.map(b=>`<span class="badge" style="color:#fff;border-color:rgba(${rgb},.45);background:rgba(${rgb},.07)">${b}</span>`).join('')}</div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  if(idx===2) return `
+    <div class="p-tag" style="color:${col}">//&nbsp; PLANET — 003 &nbsp;//</div>
+    <div class="p-divider" style="background:${col}"></div>
+    <div class="p-name" style="font-size:42px">CAREER ORBIT</div>
+    <div class="p-subtitle" style="color:${col}">EXPERIENCE &amp; EDUCATION</div>
+    <div class="p-divider" style="background:${col}"></div>
+    <div class="career-scroll">
+      <div class="sec-heading" style="color:${col}">◆ EXPERIENCE</div>
+      <div class="career-item" style="border-color:rgba(${rgb},.6)">
+        <div class="ci-role" style="color:${col}">AI/ML TRAINEE</div>
+        <div class="ci-co">Codec Technologies</div>
+        <div class="ci-period">JAN 2026 — PRESENT</div>
+        <div class="ci-desc">Practical AI/ML training, model workflows, data pipelines under industry mentorship.</div>
+      </div>
+      <div class="career-item" style="border-color:rgba(${rgb},.6)">
+        <div class="ci-role" style="color:${col}">FULL STACK INTERN</div>
+        <div class="ci-co">Devtown (Remote)</div>
+        <div class="ci-period">AUG 2024 — DEC 2024</div>
+        <div class="ci-desc">Full-stack projects, MakeMyTrip &amp; Zomato clones, REST APIs, mentor-guided reviews.</div>
+      </div>
+      <div class="sec-heading" style="color:${col}">◆ EDUCATION</div>
+      <div class="career-item" style="border-color:rgba(${rgb},.4)">
+        <div class="ci-role" style="color:${col}">B.TECH CSE</div>
+        <div class="ci-co">Parul University, Vadodara</div>
+        <div class="ci-period">EXPECTED APR 2026 &nbsp;|&nbsp; GPA: 7.64</div>
+      </div>
+      <div class="career-item" style="border-color:rgba(${rgb},.4)">
+        <div class="ci-role" style="color:${col}">B.TECH BLOCKCHAIN <span style="font-size:10px;color:rgba(255,255,255,.4);font-family:'Share Tech Mono',monospace;letter-spacing:1px;">(DUAL DEGREE)</span></div>
+        <div class="ci-co">Parul University</div>
+        <div class="ci-period">MAR 2024 &nbsp;|&nbsp; GPA: 8.60</div>
+      </div>
+      <div class="career-item" style="border-color:rgba(${rgb},.25)">
+        <div class="ci-role" style="color:${col};font-size:12px">12TH GRADE</div>
+        <div class="ci-co">Sasi Junior College, Tanuku</div>
+        <div class="ci-period">2022 &nbsp;|&nbsp; 90.6%</div>
+      </div>
+      <div class="career-item" style="border-color:rgba(${rgb},.25)">
+        <div class="ci-role" style="color:${col};font-size:12px">10TH GRADE</div>
+        <div class="ci-co">Manasa EM High School</div>
+        <div class="ci-period">2020 &nbsp;|&nbsp; 96.3%</div>
+      </div>
+      <div class="sec-heading" style="color:${col}">◆ CERTIFICATIONS</div>
+      <div class="career-item" style="border-color:rgba(${rgb},.3)">
+        <div class="ci-role" style="color:#ffe066;font-size:12px">FULL STACK WEB DEV</div>
+        <div class="ci-co">Devtown</div>
+      </div>
+      <div class="career-item" style="border-color:rgba(${rgb},.3)">
+        <div class="ci-role" style="color:#ffe066;font-size:12px">DATABASE MANAGEMENT</div>
+        <div class="ci-co">Infosys Springboard</div>
+      </div>
+      <div class="career-item" style="border-color:rgba(${rgb},.3)">
+        <div class="ci-role" style="color:#ffe066;font-size:12px">INTRODUCTION TO JAVA</div>
+        <div class="ci-co">Devtown</div>
+      </div>
+    </div>`;
+
+  if(idx===3) return `
+    <div class="p-tag" style="color:${col}">//&nbsp; PLANET — 004 &nbsp;//</div>
+    <div class="p-divider" style="background:${col}"></div>
+    <div class="p-name" style="font-size:40px">PROJECT STATION</div>
+    <div class="p-subtitle" style="color:${col}">WHAT I BUILT</div>
+    <div class="p-divider" style="background:${col}"></div>
+    <div class="projects-scroll">
+      <div class="proj-card" style="border-color:rgba(${rgb},.4)">
+        <div class="proj-name" style="color:${col}">MAILVOX</div>
+        <div class="proj-desc">AI-Powered Email Automation Platform</div>
+        <div class="proj-stack">React · Node.js · Express · MongoDB · Groq API (LLaMA) · Gmail API · Google OAuth</div>
+        <ul class="proj-bullets">
+          <li>AI generates &amp; sends emails via LLaMA model through React frontend</li>
+          <li>Bulk CSV upload — same-to-all or AI-personalized per recipient</li>
+          <li>Scheduling via node-cron + MongoDB persistence</li>
+          <li>Deployed: Vercel + Render + MongoDB Atlas — production live</li>
+        </ul>
+        <div class="proj-btns">
+          <a class="proj-btn" style="color:${col};border-color:rgba(${rgb},.5)" href="https://mailvox-seven.vercel.app/" target="_blank">LIVE ↗</a>
+          <a class="proj-btn" style="color:rgba(255,255,255,.65);border-color:rgba(255,255,255,.2)" href="https://github.com/Akhil14324/Mailvox" target="_blank">GITHUB ↗</a>
+        </div>
+      </div>
+      <div class="proj-card" style="border-color:rgba(${rgb},.4)">
+        <div class="proj-name" style="color:${col}">GITHUB PROFILE ROASTER</div>
+        <div class="proj-desc">AI Developer Analysis Tool</div>
+        <div class="proj-stack">React · Vite · Groq API · GitHub REST API · matter-js · html2canvas · pdfjs-dist</div>
+        <ul class="proj-bullets">
+          <li>GitHub stats + roasts with 4 severity levels &amp; 4 AI personas</li>
+          <li>Roast Battle mode — two profiles, AI-generated verdict</li>
+          <li>PDF parsing, physics easter egg, social share cards</li>
+          <li>Zero backend — fully on Vercel</li>
+        </ul>
+        <div class="proj-btns">
+          <a class="proj-btn" style="color:${col};border-color:rgba(${rgb},.5)" href="https://git-roaster-jet.vercel.app/" target="_blank">LIVE ↗</a>
+          <a class="proj-btn" style="color:rgba(255,255,255,.65);border-color:rgba(255,255,255,.2)" href="https://github.com/Akhil14324/git-roaster" target="_blank">GITHUB ↗</a>
+        </div>
+      </div>
+      <div class="proj-card" style="border-color:rgba(${rgb},.4)">
+        <div class="proj-name" style="color:${col}">SNOUTSY</div>
+        <div class="proj-desc">Full Stack Pet Marketplace</div>
+        <div class="proj-stack">HTML · CSS · JS · Node.js · Express · MongoDB · Firebase Auth</div>
+        <ul class="proj-bullets">
+          <li>Buy, sell &amp; adopt pets with structured listings</li>
+          <li>Google OAuth via Firebase, full CRUD for listings</li>
+          <li>RESTful backend, role-based access control</li>
+        </ul>
+        <div class="proj-btns">
+          <a class="proj-btn" style="color:rgba(255,255,255,.65);border-color:rgba(255,255,255,.2)" href="https://github.com/Akhil14324/Snoutsy" target="_blank">GITHUB ↗</a>
+        </div>
+      </div>
+    </div>`;
+
+  if(idx===4) return `
+    <div class="p-tag" style="color:${col}">//&nbsp; PLANET — 005 &nbsp;//</div>
+    <div class="p-divider" style="background:${col}"></div>
+    <div class="p-name" style="font-size:44px">CONTACT VOID</div>
+    <div class="p-subtitle" style="color:${col}">INITIATE TRANSMISSION</div>
+    <div class="p-divider" style="background:${col}"></div>
+    <div class="contact-item">
+      <div class="ci-lbl">EMAIL</div>
+      <div class="ci-val" style="color:${col}"><a href="mailto:akhilvallabhani@gmail.com" style="border-bottom-color:rgba(${rgb},.4)">akhilvallabhani@gmail.com</a></div>
+    </div>
+    <div class="contact-item">
+      <div class="ci-lbl">PHONE</div>
+      <div class="ci-val" style="color:#ffffff">+91 93818 72579</div>
+    </div>
+    <div class="contact-item">
+      <div class="ci-lbl">GITHUB</div>
+      <div class="ci-val" style="color:${col}"><a href="https://github.com/Akhil14324" target="_blank" style="border-bottom-color:rgba(${rgb},.4)">github.com/Akhil14324</a></div>
+    </div>
+    <div class="contact-item">
+      <div class="ci-lbl">LINKEDIN</div>
+      <div class="ci-val" style="color:${col}"><a href="https://www.linkedin.com/in/akhilvallabhani/" target="_blank" style="border-bottom-color:rgba(${rgb},.4)">linkedin.com/in/akhilvallabhani</a></div>
+    </div>
+    <div class="contact-item">
+      <div class="ci-lbl">LOCATION</div>
+      <div class="ci-val" style="color:rgba(255,255,255,.85)">Hyderabad, Telangana</div>
+    </div>
+    <div class="transmission">— TRANSMISSION COMPLETE. JOURNEY ENDS HERE. —</div>`;
+}
+
+// ============ ANIMATE CONTENT IN ============
+function animateContentIn(idx){
+  const inner = document.getElementById('info-inner');
+  const p = PLANETS[idx];
+  const tl = gsap.timeline();
+
+  const ptag = inner.querySelector('.p-tag');
+  const dividers = inner.querySelectorAll('.p-divider');
+  const pname = inner.querySelector('.p-name');
+  const psub = inner.querySelector('.p-subtitle');
+  const pbio = inner.querySelector('.p-bio');
+  const pmeta = inner.querySelector('.p-meta');
+  const tags = inner.querySelectorAll('.tag');
+  const skillCats = inner.querySelectorAll('.skill-cat');
+  const badges = inner.querySelectorAll('.badge');
+  const secH = inner.querySelectorAll('.sec-heading');
+  const citems = inner.querySelectorAll('.career-item');
+  const pcards = inner.querySelectorAll('.proj-card');
+  const ccontact = inner.querySelectorAll('.contact-item');
+  const trans = inner.querySelector('.transmission');
+
+  if(ptag) tl.to(ptag,{opacity:1,y:0,duration:0.5,ease:'power3.out'},0.1);
+  if(dividers[0]) tl.to(dividers[0],{width:'100%',duration:0.7,ease:'power2.inOut'},0.3);
+  if(pname) tl.to(pname,{opacity:1,y:0,duration:0.8,ease:'power3.out'},0.5);
+  if(psub) tl.to(psub,{opacity:1,y:0,duration:0.5,ease:'power3.out'},0.8);
+  if(dividers[1]) tl.to(dividers[1],{width:'80%',duration:0.5,ease:'power2.inOut'},0.95);
+  if(pbio) tl.to(pbio,{opacity:1,y:0,duration:0.6,ease:'power3.out'},1.1);
+  if(pmeta) tl.to(pmeta,{opacity:1,y:0,duration:0.5,ease:'power3.out'},1.3);
+  if(tags.length) tl.to(tags,{opacity:1,y:0,duration:0.4,stagger:0.1,ease:'back.out(1.6)'},1.4);
+  if(skillCats.length) tl.to(skillCats,{opacity:1,y:0,duration:0.4,stagger:0.1,ease:'power3.out'},0.9);
+  if(badges.length) tl.to(badges,{opacity:1,scale:1,duration:0.3,stagger:0.03,ease:'back.out(1.4)'},1.1);
+  if(secH.length) tl.to(secH,{opacity:1,duration:0.4,stagger:0.15,ease:'power2.out'},0.8);
+  if(citems.length) tl.to(citems,{opacity:1,x:0,duration:0.4,stagger:0.08,ease:'power3.out'},1.0);
+  if(pcards.length) tl.to(pcards,{opacity:1,y:0,duration:0.5,stagger:0.15,ease:'back.out(1.2)'},0.9);
+  if(ccontact.length) tl.to(ccontact,{opacity:1,y:0,duration:0.5,stagger:0.12,ease:'power3.out'},0.9);
+  if(trans) tl.to(trans,{opacity:1,duration:1,ease:'power2.out'},2.2);
+  const resumeBtn = inner.querySelector('.resume-btn');
+  if(resumeBtn) tl.to(resumeBtn,{opacity:1,y:0,duration:0.5,ease:'back.out(1.4)'},1.6);
+
+  // next btn
+  const nb = document.getElementById('next-btn');
+  if(p.next){
+    nb.textContent = p.next;
+    nb.style.color = p.color;
+    nb.style.borderColor = p.color+'88';
+    tl.to(nb,{opacity:1,duration:0.6,ease:'power3.out'},1.8);
+    tl.to(nb,{boxShadow:`0 0 22px ${p.color}55`,duration:1.4,repeat:-1,yoyo:true,ease:'sine.inOut'},2.4);
+    nb.style.pointerEvents='all';
+  } else {
+    gsap.set(nb,{opacity:0}); nb.style.pointerEvents='none';
+    document.getElementById('hint').style.opacity='0';
+  }
+}
+
+function prepContent(){
+  const inner = document.getElementById('info-inner');
+  const all = inner.querySelectorAll('.p-tag,.p-name,.p-subtitle,.p-bio,.p-meta,.tag,.skill-cat,.badge,.sec-heading,.career-item,.proj-card,.contact-item,.transmission,.resume-btn');
+  gsap.set(all,{opacity:0,clearProps:'transform'});
+  inner.querySelectorAll('.p-name,.p-subtitle,.p-bio,.p-meta,.p-tag,.tag,.skill-cat,.proj-card,.contact-item,.transmission').forEach(el=>gsap.set(el,{y:20}));
+  inner.querySelectorAll('.career-item').forEach(el=>gsap.set(el,{x:-15}));
+  inner.querySelectorAll('.badge').forEach(el=>gsap.set(el,{scale:0.9}));
+  inner.querySelectorAll('.p-divider').forEach(el=>gsap.set(el,{width:0}));
+  inner.querySelectorAll('.proj-card').forEach(el=>gsap.set(el,{y:20}));
+  gsap.set('#next-btn',{opacity:0,pointerEvents:'none'});
+}
+
+// ============ LAND ON PLANET ============
+function landOnPlanet(idx, fromLoad=false){
+  if(isAnimating && !fromLoad) return;
+  isAnimating = true;
+  const p = PLANETS[idx];
+
+  document.getElementById('hud-tl').textContent = p.hud;
+  document.getElementById('hud-tl').style.color = p.color;
+  // sync cursor color to planet
+  document.getElementById('cursor').style.borderColor = p.color;
+  document.getElementById('cursor').style.boxShadow = `0 0 8px ${p.color}55`;
+  document.getElementById('cursor-dot').style.background = p.color;
+  document.getElementById('cursor-dot').style.boxShadow = `0 0 6px ${p.color}`;
+  updateBackBtn(idx);
+  document.getElementById('hud-tr').textContent = 'APPROACHING...';
+  document.getElementById('hud-tr').style.color = '#ffaa00';
+
+  const infoSide = document.getElementById('info-side');
+  const planetSide = document.getElementById('planet-side');
+
+  // hide current content if transitioning
+  if(currentPlanet >= 0 && !fromLoad){
+    gsap.to([infoSide, planetSide],{opacity:0,duration:0.4,ease:'power2.in'});
+  }
+
+  // Update planet
+  if(planetAnimFrame) cancelAnimationFrame(planetAnimFrame);
+  currentPlanetData = p;
+  animatePlanet();
+
+  // update satellite orbit color glow
+  document.getElementById('satellite-wrap').style.filter = `drop-shadow(0 0 4px ${p.color})`;
+
+  // content
+  const inner = document.getElementById('info-inner');
+  inner.innerHTML = getContent(idx);
+  prepContent();
+
+  // planet position — right side
+  gsap.set(planetSide,{x:0,opacity:0});
+  gsap.set(infoSide,{x:0,opacity:0});
+
+  const delay = fromLoad ? 0.3 : 0.5;
+
+  // ship: fly to planet — enters from left if going forward, right if going back
+  const pRight = window.innerWidth * 0.75 - 32;
+  const pMid = window.innerHeight / 2 - 215;
+  const enterFromRight = !fromLoad && idx < (currentPlanet >= 0 ? currentPlanet : 0) && currentPlanet >= 0;
+
+  if(!fromLoad){
+    // Ship enters from left or right depending on direction
+    const startX = enterFromRight ? window.innerWidth + 100 : -100;
+    const startRot = enterFromRight ? 10 : -10;
+    trailActive = true;
+    bigFlame();
+    gsap.set(shipWrap,{x:startX, y:window.innerHeight/2, rotation:startRot});
+
+    gsap.to(shipWrap,{
+      duration:2.2,
+      ease:'power2.inOut',
+      x: pRight,
+      y: pMid,
+      rotation: 0,
+      onComplete:()=>{
+        trailActive = false;
+        startIdleFlame();
+
+        startIdleBob();
+        document.getElementById('hud-tr').textContent = 'LANDED ✓';
+        document.getElementById('hud-tr').style.color = '#00ff88';
+        isAnimating = false;
+      }
+    });
+  } else {
+    // First load — ship comes from bottom
+    trailActive = true;
+    bigFlame();
+    gsap.to(shipWrap,{
+      x: pRight, y: pMid,
+      duration:2.0, ease:'power2.out',
+      onComplete:()=>{
+        trailActive = false;
+        startIdleFlame();
+        startIdleBob();
+        document.getElementById('hud-tr').textContent = 'LANDED ✓';
+        document.getElementById('hud-tr').style.color = '#00ff88';
+        isAnimating = false;
+      }
+    });
+  }
+
+  // planet zooms in from right
+  gsap.fromTo(planetSide,
+    {opacity:0, x:120, scale:0.6},
+    {opacity:1, x:0, scale:1, duration:1.0, delay:delay, ease:'back.out(1.3)'}
+  );
+
+  // info slides in from left
+  gsap.fromTo(infoSide,
+    {opacity:0, x:-60},
+    {opacity:1, x:0, duration:0.8, delay:delay+0.2, ease:'power3.out',
+      onComplete:()=>{ animateContentIn(idx); }
+    }
+  );
+
+  // update nav + breadcrumbs
+  if(!visitedPlanets.includes(idx)) visitedPlanets.push(idx);
+  document.querySelectorAll('.ndot').forEach((d,i)=>{
+    d.classList.toggle('unlocked', visitedPlanets.includes(i));
+    d.classList.toggle('active', i===idx);
+    if(i===idx) d.style.background = p.color;
+    else d.style.background = 'transparent';
+  });
+  document.querySelectorAll('.bcrumb').forEach((b,i)=>{
+    if(visitedPlanets.includes(i)) b.classList.add('visible');
+  });
+
+  currentPlanet = idx;
+}
+
+// ============ NEXT BUTTON ============
+// ============ BACK BUTTON ============
+document.getElementById('back-btn').addEventListener('click',()=>{
+  if(isAnimating) return;
+  const prev = currentPlanet - 1;
+  if(prev < 0) return;
+
+  isAnimating = true;
+  trailActive = true;
+  bigFlame();
+  if(idleBob) idleBob.kill();
+
+  // Tilt right and fly off screen to the right
+  gsap.to(shipWrap,{rotation:15, duration:0.3, ease:'power2.out'});
+  gsap.to(shipWrap,{
+    x: window.innerWidth + 150,
+    y: window.innerHeight/2,
+    duration:1.4,
+    ease:'power2.inOut',
+    onComplete:()=>{
+      gsap.set(shipWrap,{rotation:0});
+      trailActive = false;
+      isAnimating = false;
+      landOnPlanet(prev);
+    }
+  });
+});
+
+function updateBackBtn(idx){
+  const btn = document.getElementById('back-btn');
+  if(idx > 0){
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'all';
+  } else {
+    btn.style.opacity = '0';
+    btn.style.pointerEvents = 'none';
+  }
+}
+
+// ============ CURSOR ============
+const cursorEl = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursor-dot');
+let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
+document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+document.addEventListener('mousedown', () => cursorEl.classList.add('click'));
+document.addEventListener('mouseup', () => cursorEl.classList.remove('click'));
+function tickCursor(){
+  cursorEl.style.left = mouseX + 'px';
+  cursorEl.style.top  = mouseY + 'px';
+  cursorDot.style.left = mouseX + 'px';
+  cursorDot.style.top  = mouseY + 'px';
+  requestAnimationFrame(tickCursor);
+}
+tickCursor();
+document.querySelectorAll('.ndot,.bcrumb').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const i = parseInt(el.dataset.i);
+    if(visitedPlanets.includes(i) && i!==currentPlanet && !isAnimating) landOnPlanet(i);
+  });
+});
+
+// ============ COMET TAIL ============
+const cometCanvas = document.createElement('canvas'); cometCanvas.width=window.innerWidth; cometCanvas.height=window.innerHeight;
+const cometCtx = cometCanvas.getContext('2d');
+function resizeComet(){ cometCanvas.width=window.innerWidth; cometCanvas.height=window.innerHeight; }
+resizeComet(); window.addEventListener('resize',resizeComet);
+
+let cometTrail = [];
+let cometActive = false;
+let lastShipX = 0, lastShipY = 0;
+
+function updateCometTrail(){
+  if(cometActive){
+    const r = shipWrap.getBoundingClientRect();
+    const sx = r.left+r.width/2, sy = r.top+r.height*0.85;
+    if(Math.abs(sx-lastShipX)>1||Math.abs(sy-lastShipY)>1){
+      cometTrail.push({x:sx,y:sy,life:1,size:Math.random()*6+3,col:trailCol});
+      lastShipX=sx; lastShipY=sy;
+    }
+  }
+  cometCtx.clearRect(0,0,cometCanvas.width,cometCanvas.height);
+  for(let i=cometTrail.length-1;i>=0;i--){
+    const p=cometTrail[i];
+    p.life-=0.018; p.size*=0.985;
+    if(p.life<=0){cometTrail.splice(i,1);continue;}
+    const r2=parseInt(p.col.slice(1,3),16),g2=parseInt(p.col.slice(3,5),16),b2=parseInt(p.col.slice(5,7),16);
+    cometCtx.save();
+    cometCtx.globalAlpha=p.life*0.6;
+    cometCtx.shadowBlur=14; cometCtx.shadowColor=p.col;
+    cometCtx.fillStyle=`rgba(${r2},${g2},${b2},${p.life})`;
+    cometCtx.beginPath(); cometCtx.arc(p.x,p.y,p.size,0,Math.PI*2); cometCtx.fill();
+    cometCtx.globalAlpha=p.life*0.3;
+    cometCtx.fillStyle='#ffffff';
+    cometCtx.beginPath(); cometCtx.arc(p.x,p.y,p.size*0.3,0,Math.PI*2); cometCtx.fill();
+    cometCtx.restore();
+  }
+  requestAnimationFrame(updateCometTrail);
+}
+updateCometTrail();
+
+// ============ PLANET SHAKE ============
+function shakePlanet(){
+  const ps = document.getElementById('planet-side');
+  gsap.to(ps,{x:8,duration:0.05,yoyo:true,repeat:7,ease:'power1.inOut',
+    onComplete:()=>gsap.set(ps,{x:0})});
+}
+
+// ============ NEBULA PULSE ============
+function startNebulaPulse(){
+  gsap.to('#bg-canvas',{
+    filter:'brightness(1.15)',duration:3,repeat:-1,yoyo:true,ease:'sine.inOut'
+  });
+}
+startNebulaPulse();
+
+// ============ SPACE DEBRIS ============
+const debrisCanvas = document.createElement('canvas');
+debrisCanvas.style.cssText='position:fixed;inset:0;z-index:2;pointer-events:none;';
+document.body.appendChild(debrisCanvas);
+const dCtx = debrisCanvas.getContext('2d');
+function resizeDebris(){ debrisCanvas.width=window.innerWidth; debrisCanvas.height=window.innerHeight; }
+resizeDebris(); window.addEventListener('resize',resizeDebris);
+
+const debris = [];
+for(let i=0;i<25;i++){
+  debris.push({
+    x:Math.random()*window.innerWidth, y:Math.random()*window.innerHeight,
+    vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.2,
+    size:Math.random()*3+1, rot:Math.random()*Math.PI*2,
+    rotSpeed:(Math.random()-0.5)*0.02,
+    type:Math.floor(Math.random()*3),
+    alpha:Math.random()*0.35+0.1
+  });
+}
+
+function drawDebris(){
+  dCtx.clearRect(0,0,debrisCanvas.width,debrisCanvas.height);
+  debris.forEach(d=>{
+    d.x+=d.vx; d.y+=d.vy; d.rot+=d.rotSpeed;
+    if(d.x<-20) d.x=debrisCanvas.width+20;
+    if(d.x>debrisCanvas.width+20) d.x=-20;
+    if(d.y<-20) d.y=debrisCanvas.height+20;
+    if(d.y>debrisCanvas.height+20) d.y=-20;
+    dCtx.save();
+    dCtx.globalAlpha=d.alpha;
+    dCtx.translate(d.x,d.y); dCtx.rotate(d.rot);
+    dCtx.strokeStyle='rgba(180,200,220,0.8)'; dCtx.lineWidth=0.8;
+    if(d.type===0){
+      dCtx.strokeRect(-d.size,-d.size,d.size*2,d.size*2);
+    } else if(d.type===1){
+      dCtx.beginPath();
+      dCtx.moveTo(0,-d.size); dCtx.lineTo(d.size,d.size); dCtx.lineTo(-d.size,d.size); dCtx.closePath();
+      dCtx.stroke();
+    } else {
+      dCtx.beginPath(); dCtx.arc(0,0,d.size,0,Math.PI*2); dCtx.stroke();
+    }
+    dCtx.restore();
+  });
+  requestAnimationFrame(drawDebris);
+}
+drawDebris();
+
+// ============ LOADING SCREEN ============
+function runLoader(onDone){
+  const steps=[
+    'INITIALIZING SYSTEMS...','CALIBRATING THRUSTERS...',
+    'LOADING STAR CHARTS...','PREPARING LAUNCH SEQUENCE...','ALL SYSTEMS GO.'
+  ];
+  const pctEl  = document.getElementById('loader-pct');
+  const barEl  = document.getElementById('loader-bar');
+  const txtEl  = document.getElementById('loader-text');
+
+  // Assemble ship parts sequentially
+  const tl = gsap.timeline();
+  tl.to('#lpart-wings',  {opacity:1, duration:0.5, ease:'back.out(1.6)'}, 0.3)
+    .to('#lpart-body',   {opacity:1, duration:0.5, ease:'back.out(1.4)'}, 0.7)
+    .to('#lpart-cockpit',{opacity:1, duration:0.5, ease:'back.out(1.6)'}, 1.1)
+    .to('#lpart-flame',  {opacity:1, duration:0.3, ease:'power2.out'},    1.5);
+
+  // Flame flicker loop
+  gsap.to('#lpart-flame',{scaleY:1.35,duration:0.1,repeat:-1,yoyo:true,ease:'power1.inOut',transformOrigin:'50% 0%',delay:1.5});
+  // Ship hover
+  gsap.to('#loader-ship-svg',{y:-10,duration:1.4,repeat:-1,yoyo:true,ease:'sine.inOut',delay:1.8});
+
+  // Progress 0→100 smoothly
+  let pct = 0;
+  let stepIdx = 0;
+  const interval = setInterval(()=>{
+    pct = Math.min(pct + Math.random()*18 + 6, 100);
+    const rounded = Math.floor(pct);
+    if(pctEl) pctEl.textContent = rounded + '%';
+    if(barEl) barEl.style.width = pct + '%';
+    if(stepIdx < steps.length && pct >= (stepIdx+1)/steps.length*100){
+      if(txtEl) txtEl.textContent = steps[stepIdx];
+      stepIdx++;
+    }
+    if(pct >= 100){
+      clearInterval(interval);
+      if(pctEl) pctEl.textContent = '100%';
+      if(barEl) barEl.style.width = '100%';
+      if(txtEl) txtEl.textContent = 'LAUNCH READY.';
+      setTimeout(()=>{
+        gsap.to('#loader',{opacity:0, scale:1.04, duration:0.7, ease:'power2.in',
+          onComplete:()=>{
+            const l = document.getElementById('loader');
+            if(l) l.style.display='none';
+            onDone();
+          }
+        });
+      }, 500);
+    }
+  }, 350);
+}
+
+// ============ PATCH landOnPlanet for new effects ============
+const _origLand = landOnPlanet;
+// Override next button to use warp + burst
+document.getElementById('next-btn').removeEventListener('click', document.getElementById('next-btn')._cb);
+
+function doLaunch(){
+  if(isAnimating) return;
+  const next = currentPlanet+1;
+  if(next >= PLANETS.length) return;
+
+  isAnimating = true;
+  cometActive = true;
+  trailActive = true;
+  bigFlame();
+  if(idleBob) idleBob.kill();
+
+  // Tilt ship slightly left as it takes off — NO autoRotate (keeps ship upright)
+  gsap.to(shipWrap,{rotation:-15, duration:0.3, ease:'power2.out'});
+
+  gsap.to(shipWrap,{
+    duration:1.4, ease:'power2.inOut',
+    x: -150,
+    y: window.innerHeight/2,
+    onComplete:()=>{
+      gsap.set(shipWrap,{rotation:0});
+      cometActive=false;
+      trailActive=false;
+      isAnimating=false;
+      landOnPlanet(next);
+    }
+  });
+}
+
+document.getElementById('next-btn').addEventListener('click', doLaunch);
+
+// Patch landOnPlanet to add shake + comet on arrival
+const origLandOnPlanet = landOnPlanet;
+window.landOnPlanet = function(idx, fromLoad=false){
+  cometActive = true;
+  origLandOnPlanet(idx, fromLoad);
+  // Shake on landing after travel time
+  const delay = fromLoad ? 2200 : 2500;
+  setTimeout(()=>{
+    cometActive = false;
+    if(!fromLoad) shakePlanet();
+  }, delay);
+};
+
+// (old loader removed)
+
+// ============ START ============
+window.addEventListener('load',()=>{
+  runLoader(()=>{
+    setTimeout(()=>landOnPlanet(0,true), 300);
+  });
+});
+
+</script>
+</body>
+</html>
